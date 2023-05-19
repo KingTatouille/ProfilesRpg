@@ -1,0 +1,4 @@
+name: ProfilesRpg
+version: '${project.version}'
+main: hillwalk.fr.profilesrpg.ProfilesRpg
+api-version: 1.19
