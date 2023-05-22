@@ -2,3 +2,13 @@ name: ProfilesRpg
 version: '${project.version}'
 main: hillwalk.fr.profilesrpg.ProfilesRpg
 api-version: 1.19
+
+softdepend:
+  - LuckPerms
+  - MMOCore
+
+commands:
+  profile:
+    description: Main command for the ProfilesRPG plugin.
+    usage: /<command> [subcommand] [args]
+    aliases: [pr, profilerpg]

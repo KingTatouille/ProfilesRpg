@@ -52,7 +52,6 @@ public class DatabaseManager {
                             "profileUUID TEXT PRIMARY KEY," +
                             "playerUUID TEXT," +
                             "name TEXT," +
-                            "spawnLocation TEXT," +
                             "health REAL," +
                             "maxHealth REAL," +
                             "food INT," +

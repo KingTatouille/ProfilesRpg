@@ -1,0 +1,16 @@
+characters_authorized: "[a-zA-Z0-9_]+"
+
+# Create the emplacement of the lobby (where the player will spawn for select/create/delete her profile.
+# Profile is for the spawn of a new profile.
+lobby:
+  location:
+    world: ''
+    x: 0
+    y: 0
+    z: 0
+profile:
+  spawn:
+    world: ''
+    x: 0
+    y: 0
+    z: 0

@@ -1,0 +1,51 @@
+gui:
+  title: "Profile Selection"
+  size: 54
+  items:
+    no_permissions:
+      type: "BARRIER"
+      position: [29, 30, 31, 32, 33]
+      name: "&cNo VIP Permission"
+      lore:
+        - "&7You don't have VIP permission"
+        - "&7to access these profile slots."
+      customModelData: 1
+    vip:
+      type: "GREEN_STAINED_GLASS_PANE"
+      position: [ 29, 30, 31, 32, 33 ]
+      permission: "profileRpg.vip"
+      name: "&2Vip slot"
+      lore:
+        - "&7You are vip  so you can"
+        - "&7access these profile slots."
+      customModelData: 1
+    create_profile:
+      type: "PAPER"
+      position: [49]
+      name: "&aCreate New Profile"
+      lore:
+        - "&7Click here to create"
+        - "&7a new profile."
+      customModelData: 2
+    gray_stained_glass_pane:
+      type: "GRAY_STAINED_GLASS_PANE"
+      position: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 17, 18, 26, 27, 35, 36, 44, 45, 46, 47, 48, 50, 51, 52]
+      name: "&7Decoration"
+      lore: []
+      customModelData: 3
+    profile_slot:
+      type: "GRAY_STAINED_GLASS_PANE"
+      position: [20, 21, 22, 23, 24, 29, 30, 31, 32, 33]
+      name: "&eProfile Slot"
+      lore:
+        - "&cYou can delete this profile with"
+        - "&cShift + right-click"
+      customModelData: 4
+    disconnect:
+      type: "REDSTONE_BLOCK"
+      position: [ 53 ]
+      name: "&cDisconnect"
+      lore:
+        - "&7Click here to disconnect"
+        - "&7from the server."
+      customModelData: 5

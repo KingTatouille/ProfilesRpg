@@ -1,0 +1,45 @@
+gui:
+  title: "Class Selection"
+  size: 54
+  items:
+    mage_class:
+      type: "ENCHANTED_BOOK"
+      position: [20]
+      name: "&6Mage Class"
+      lore:
+        - "&7Specializes in magic and spells."
+        - "&7Level: {mage_class_level}"
+      command: "mmocore setclass Mage"
+      customModelData: 1
+    warrior_class:
+      type: "IRON_SWORD"
+      position: [22]
+      name: "&6Warrior Class"
+      lore:
+        - "&7Excel in close combat and defense."
+        - "&7Level: {warrior_class_level}"
+      command: "mmocore setclass Warrior"
+      customModelData: 2
+    archer_class:
+      type: "BOW"
+      position: [24]
+      name: "&6Archer Class"
+      lore:
+        - "&7Master of the bow and ranged combat."
+        - "&7Level: {archer_class_level}"
+      command: "mmocore setclass Archer"
+      customModelData: 3
+    gray_stained_glass_pane:
+      type: "GRAY_STAINED_GLASS_PANE"
+      position: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 17, 18, 26, 27, 35, 36, 44, 45, 46, 47, 48, 50, 51, 52]
+      name: "&7Decoration"
+      lore: []
+      customModelData: 4
+    disconnect:
+      type: "REDSTONE_BLOCK"
+      position: [ 53 ]
+      name: "&cDisconnect"
+      lore:
+        - "&7Click here to disconnect"
+        - "&7from the server."
+      customModelData: 5
