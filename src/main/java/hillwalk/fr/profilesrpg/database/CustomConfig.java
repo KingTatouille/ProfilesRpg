@@ -19,7 +19,6 @@ public class CustomConfig {
         this.fileName = fileName;
     }
 
-    // Call this in your onEnable method
     public void setup() {
         if (!plugin.getDataFolder().exists()) {
             plugin.getDataFolder().mkdir();

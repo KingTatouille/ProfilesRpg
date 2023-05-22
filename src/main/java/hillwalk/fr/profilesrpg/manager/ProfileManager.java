@@ -25,14 +25,11 @@ import java.util.UUID;
 public class ProfileManager {
     private final ProfilesRpg plugin;
     private final DatabaseManager databaseManager;
-
-    private LuckPerms luckPermsApi;
     private HashMap<UUID, List<Profile>> profiles;
 
     public ProfileManager(ProfilesRpg plugin, DatabaseManager databaseManager) {
         this.plugin = plugin;
         this.databaseManager = databaseManager;
-        this.luckPermsApi = this.plugin.getLuckPermsApi();
         this.profiles = new HashMap<>();
     }
 
@@ -75,7 +72,7 @@ public class ProfileManager {
             results = statement.executeQuery();
             if (results.next()) {
                 // Load the location into the player...
-                Profile profile = getProfile(player.getUniqueId());
+                Profile profile = getProfile(player.getUniqueId(), profileUUID);
                 if (profile != null) {
                     Location spawnLocation = new Location(
                             player.getWorld(),
@@ -114,15 +111,29 @@ public class ProfileManager {
         }
     }
 
-    public Profile getProfile(UUID playerUUID) {
+    public Profile getProfile(UUID playerUUID, UUID profileUUID) {
         List<Profile> playerProfiles = profiles.get(playerUUID);
-        if (playerProfiles != null && !playerProfiles.isEmpty()) {
-            // Retourne le premier profil de la liste, vous pouvez adapter cette logique selon vos besoins
-            return playerProfiles.get(0);
+        if (playerProfiles != null) {
+            for (Profile profile : playerProfiles) {
+                if (profile.getProfileId().equals(profileUUID)) {
+                    return profile;
+                }
+            }
         }
         return null;
     }
 
+    public Profile getProfile(UUID playerUUID) {
+        List<Profile> playerProfiles = profiles.get(playerUUID);
+        if (playerProfiles != null) {
+            for (Profile profile : playerProfiles) {
+                if (profile.getProfileId().equals(playerUUID)) {
+                    return profile;
+                }
+            }
+        }
+        return null;
+    }
 
     public void createProfile(Player player, Profile profile) {
         try {
@@ -147,7 +158,7 @@ public class ProfileManager {
             PreparedStatement statement;
 
             // Save profile data
-            Profile profile = getProfile(player.getUniqueId());
+            Profile profile = getProfile(player.getUniqueId(), profileUUID);
             if (profile != null) {
                 statement = connection.prepareStatement(
                         "UPDATE profiles SET health = ?, food = ?, level = ?, exp = ?, group = ? WHERE profileUUID = ?"
@@ -269,21 +280,25 @@ public class ProfileManager {
 
     //Section pour les groupes.
 
-    public void applyProfile(Player player, Profile profile) {
-        User user = luckPermsApi.getUserManager().getUser(player.getUniqueId());
-        if (user != null) {
-            user.data().clear(NodeType.INHERITANCE::matches);  // Remove all groups
-            user.data().add(Node.builder("group." + profile.getGroup()).build());  // Add the new group
-            luckPermsApi.getUserManager().saveUser(user);
-        }
-    }
-
-    public void removeProfile(Player player) {
-        User user = luckPermsApi.getUserManager().getUser(player.getUniqueId());
-        if (user != null) {
-            user.data().clear(NodeType.INHERITANCE::matches);  // Remove all groups
-            luckPermsApi.getUserManager().saveUser(user);
-        }
-    }
+//    public void applyProfile(Player player, Profile profile) {
+//        if (plugin.getServer().getPluginManager().getPlugin("LuckPerms") != null) {
+//            User user = plugin.getLuckPermsApi().getUserManager().getUser(player.getUniqueId());
+//            if (user != null) {
+//                user.data().clear(NodeType.INHERITANCE::matches);  // Remove all groups
+//                user.data().add(Node.builder("group." + profile.getGroup()).build());  // Add the new group
+//                plugin.getLuckPermsApi().getUserManager().saveUser(user);
+//            }
+//        }
+//    }
+//
+//    public void removeProfile(Player player) {
+//        if (plugin.getServer().getPluginManager().getPlugin("LuckPerms") != null) {
+//            User user = plugin.getLuckPermsApi().getUserManager().getUser(player.getUniqueId());
+//            if (user != null) {
+//                user.data().clear(NodeType.INHERITANCE::matches);  // Remove all groups
+//                plugin.getLuckPermsApi().getUserManager().saveUser(user);
+//            }
+//        }
+//    }
 
 }

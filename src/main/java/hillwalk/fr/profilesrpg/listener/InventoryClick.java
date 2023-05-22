@@ -2,27 +2,25 @@ package hillwalk.fr.profilesrpg.listener;
 
 import hillwalk.fr.profilesrpg.Profile;
 import hillwalk.fr.profilesrpg.ProfilesRpg;
-import hillwalk.fr.profilesrpg.manager.ProfileManager;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataType;
 
-import java.util.List;
 import java.util.UUID;
 
 public class InventoryClick implements Listener {
 
     private ProfilesRpg plugin;
-    public InventoryClick(ProfilesRpg plugin){
+
+    public InventoryClick(ProfilesRpg plugin) {
         this.plugin = plugin;
     }
 
@@ -42,70 +40,64 @@ public class InventoryClick implements Listener {
 
         event.setCancelled(true);
 
-        int slot = event.getSlot();
-
-        FileConfiguration config = plugin.getProfileSelection().get();
-        ConfigurationSection itemsSection = config.getConfigurationSection("gui.items");
-
-        for (String key : itemsSection.getKeys(false)) {
-            ConfigurationSection itemSection = itemsSection.getConfigurationSection(key);
-            if (itemSection == null) {
-                continue;
-            }
-
-            List<Integer> positions = itemSection.getIntegerList("position");
-            if (positions.contains(slot)) {
-                handleItemClick(player, itemSection, player.getDisplayName());
-                break;
-            }
-        }
-    }
-
-    private void handleItemClick(Player player, ConfigurationSection itemSection, String name) {
-        String action = itemSection.getString("action");
-        if (action == null) {
+        ItemMeta meta = clickedItem.getItemMeta();
+        if (meta == null) {
+            plugin.getLogger().info("ItemMeta is null. Ignoring event.");
             return;
         }
 
-        ProfileManager profileManager = plugin.getProfileManager(); // Declare the variable outside the switch
-        UUID playerId = player.getUniqueId(); // Declare the playerId outside the switch
-
-        switch (action.toLowerCase()) {
+        switch (meta.getDisplayName().toLowerCase()) {
             case "create_profile":
-                // Ferme l'inventaire
+                // Close the inventory
                 player.closeInventory();
 
-                // Enregistre l'écouteur de chat
-                ChatListener chatListener = new ChatListener(plugin, profileManager);
+                // Register chat listener
+                ChatListener chatListener = new ChatListener(plugin, plugin.getProfileManager());
                 Bukkit.getPluginManager().registerEvents(chatListener, plugin);
-                break;
-
-            case "load_profile":
-                Profile loadProfile = profileManager.getProfile(playerId);
-
-                if (loadProfile != null) {
-                    loadProfile.applyToPlayer(player);
-                    String loadedMessage = String.format(plugin.getMessages().get().getString("profile_loaded"), name);
-                    player.sendMessage(ChatColor.translateAlternateColorCodes('&', loadedMessage));
-                } else {
-                    String notFoundMessage = String.format(plugin.getMessages().get().getString("profile_not_found"), name);
-                    player.sendMessage(ChatColor.translateAlternateColorCodes('&', notFoundMessage));
-                }
-                break;
-
-            case "delete_profile":
-                profileManager.deleteProfile(playerId);
-                break;
+                plugin.getLogger().info("Creating new profile.");
+                return;
 
             case "disconnect":
-                player.kickPlayer(ChatColor.translateAlternateColorCodes('&', plugin.getMessages().get().getString("deconnexion")));
-                break;
+                player.kickPlayer("You have been disconnected.");
+                plugin.getLogger().info("Player disconnected.");
+                return;
 
             default:
                 break;
         }
+
+        if (!meta.getPersistentDataContainer().has(plugin.getProfileKey(), PersistentDataType.STRING)) {
+            plugin.getLogger().info("ItemMeta does not contain a profile UUID. Ignoring event.");
+            return;
+        }
+
+        String profileUUIDString = meta.getPersistentDataContainer().get(plugin.getProfileKey(), PersistentDataType.STRING);
+        UUID profileUUID = UUID.fromString(profileUUIDString);
+        Profile profile = plugin.getProfileManager().getProfile(player.getUniqueId(), profileUUID);
+        if (profile == null) {
+            plugin.getLogger().info("No profile found for UUID: " + profileUUIDString);
+            player.sendMessage("Profile not found.");
+            return;
+        }
+
+        plugin.getLogger().info("Detected profile: " + profile.getName());
+
+        switch (meta.getDisplayName().toLowerCase()) {
+            case "load_profile":
+                profile.applyToPlayer(player);
+                plugin.getLogger().info("Loading profile: " + profile.getName());
+                player.sendMessage("Profile " + profile.getName() + " loaded.");
+                break;
+
+            case "delete_profile":
+                plugin.getProfileManager().deleteProfile(profileUUID);
+                plugin.getLogger().info("Deleting profile: " + profile.getName());
+                player.sendMessage("Profile " + profile.getName() + " deleted.");
+                break;
+
+            default:
+                plugin.getLogger().info("Unknown action detected: " + meta.getDisplayName().toLowerCase());
+                break;
+        }
     }
-
-
-
 }

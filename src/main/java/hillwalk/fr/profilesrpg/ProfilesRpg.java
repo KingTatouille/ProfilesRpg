@@ -13,6 +13,7 @@ import net.luckperms.api.LuckPerms;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.NamespacedKey;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -22,14 +23,14 @@ public class ProfilesRpg extends JavaPlugin {
     private ProfileManager profileManager;
     private CustomConfig profileSelection;
     private LuckPerms luckPermsApi;
+    private NamespacedKey profileKey;
+    private NamespacedKey actionKey;
     private CustomConfig messages;
     public static String prefix;
     private PlayerLobbyStatusManager playerLobbyStatusManager;
 
     @Override
     public void onEnable() {
-        playerLobbyStatusManager = new PlayerLobbyStatusManager();
-
         profileSelection = new CustomConfig(this, "gui/profile_selection.yml");
         profileSelection.setup();
 
@@ -37,12 +38,25 @@ public class ProfilesRpg extends JavaPlugin {
         messages.setup();
 
         this.databaseManager = new DatabaseManager(this);
+        this.databaseManager.connect();
+
+        this.profileKey = new NamespacedKey(this, "profileUUID");
+        this.actionKey = new NamespacedKey(this, "item_action");
+
+        this.playerLobbyStatusManager = new PlayerLobbyStatusManager();
         this.profileManager = new ProfileManager(this, this.databaseManager);
 
-        this.luckPermsApi = Bukkit.getServicesManager().getRegistration(LuckPerms.class).getProvider();
+        if (getServer().getPluginManager().getPlugin("LuckPerms") != null) {
+            this.luckPermsApi = Bukkit.getServicesManager().getRegistration(LuckPerms.class).getProvider();
+        } else {
+            getLogger().info("LuckPerms not detected.");
+            this.luckPermsApi = null;
+        }
 
         if (getServer().getPluginManager().getPlugin("MMOCore") == null) {
             getLogger().info("MMOCore not detected.");
+        } else {
+            getLogger().info("MMOCore detected!");
         }
 
         // Sauvegarde de la config par defaut
@@ -60,7 +74,6 @@ public class ProfilesRpg extends JavaPlugin {
 
         prefix = ChatColor.translateAlternateColorCodes('&',  messages.get().getString("messages.prefix"));
     }
-
 
     @Override
     public void onDisable() {
@@ -83,7 +96,7 @@ public class ProfilesRpg extends JavaPlugin {
             if (getServer().getPluginManager().getPlugin("LuckPerms") != null) {
                 RegisteredServiceProvider<LuckPerms> provider = Bukkit.getServicesManager().getRegistration(LuckPerms.class);
                 if (provider != null) {
-                    this.luckPermsApi = provider.getProvider();
+                    return this.luckPermsApi = provider.getProvider();
                 }
             }
         }
@@ -128,6 +141,13 @@ public class ProfilesRpg extends JavaPlugin {
         return false;
     }
 
+    public NamespacedKey getProfileKey() {
+        return this.profileKey;
+    }
+
+    public NamespacedKey getActionKey() {
+        return new NamespacedKey(this, "item_action");
+    }
 
 }
 

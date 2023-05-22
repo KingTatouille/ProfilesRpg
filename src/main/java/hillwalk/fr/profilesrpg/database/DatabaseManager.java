@@ -15,7 +15,6 @@ public class DatabaseManager {
 
     public DatabaseManager(JavaPlugin plugin) {
         this.plugin = plugin;
-        setupTables();
     }
 
     public void connect() {
@@ -37,10 +36,14 @@ public class DatabaseManager {
 
             plugin.getLogger().info("Connected to the SQLite database.");
 
+            // Now that we're connected, set up the tables
+            setupTables();
+
         } catch (SQLException | IOException e) {
             plugin.getLogger().severe("Could not connect to the SQLite database: " + e.getMessage());
         }
     }
+
 
     public void setupTables() {
         try {
