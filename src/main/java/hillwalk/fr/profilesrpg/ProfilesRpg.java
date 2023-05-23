@@ -126,6 +126,10 @@ public class ProfilesRpg extends JavaPlugin {
         return false;
     }
 
+    public String getPrefix(){
+        return ChatColor.translateAlternateColorCodes('&', prefix);
+    }
+
     public boolean getProfileSpawn(){
 
         String profileWorld = getConfig().getString("profile.spawn.world");
