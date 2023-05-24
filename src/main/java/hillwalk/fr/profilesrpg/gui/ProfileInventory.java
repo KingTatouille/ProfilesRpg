@@ -13,132 +13,125 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class ProfileInventory {
-    private ProfilesRpg plugin;
 
-    public ProfileInventory(ProfilesRpg plugin) {
+    private ProfilesRpg plugin;
+    private Player player;
+    private Inventory inventory;
+
+    public ProfileInventory(ProfilesRpg plugin, Player player) {
         this.plugin = plugin;
+        this.player = player;
+        createInventory();
     }
 
-    public void openProfileInventory(Player player) {
+    private void createInventory() {
         FileConfiguration config = plugin.getProfileSelection().get();
-        int inventorySize = config.getInt("gui.size");
         String inventoryTitle = ChatColor.translateAlternateColorCodes('&', config.getString("gui.title"));
-        Inventory inventory = Bukkit.createInventory(null, inventorySize, inventoryTitle);
+        int inventorySize = config.getInt("gui.size");
+        inventory = Bukkit.createInventory(player, inventorySize, inventoryTitle);
 
-        // Load player profiles
-        UUID playerUUID = player.getUniqueId();
-        List<Profile> playerProfiles = plugin.getProfileManager().getPlayerProfiles(playerUUID);
-        if (playerProfiles != null) {
-            int profileSlotIndex = 0;
-            for (Profile profile : playerProfiles) {
-                if (profileSlotIndex >= 10) {
-                    // Reached the maximum number of profile slots
-                    break;
-                }
-
-                ItemStack item = createProfileItem(profile);
-                if (item != null) {
-                    // Add the profile slot item to the inventory at the specified position
-                    inventory.setItem(profileSlotIndex, item);
-                    profileSlotIndex++;
-                    plugin.getLogger().info("Added profile item to inventory for player: " + player.getName() + ", Profile: " + profile.getName());
-                } else {
-                    plugin.getLogger().warning("Failed to create profile item for player: " + player.getName() + ", Profile: " + profile.getName());
-                }
-            }
-        } else {
-            plugin.getLogger().warning("No profiles found for player with UUID: " + playerUUID);
-        }
-
-        // Load the rest of the items from config
         ConfigurationSection itemsSection = config.getConfigurationSection("gui.items");
         if (itemsSection != null) {
             for (String key : itemsSection.getKeys(false)) {
-                if (key.equals("profile_slot")) {
-                    // Skip processing the profile slot item
-                    continue;
-                }
-
                 ConfigurationSection itemSection = itemsSection.getConfigurationSection(key);
                 if (itemSection != null) {
-                    ItemStack item = createItemFromConfig(itemSection);
-                    if (item != null) {
-                        List<Integer> positions = itemSection.getIntegerList("position");
-                        for (Integer position : positions) {
-                            inventory.setItem(position, item);
+                    String type = itemSection.getString("type");
+                    List<Integer> positions = itemSection.getIntegerList("position");
+                    String permission = itemSection.getString("permission");
+                    String name = ChatColor.translateAlternateColorCodes('&', itemSection.getString("name"));
+                    List<String> lore = itemSection.getStringList("lore").stream()
+                            .map(line -> ChatColor.translateAlternateColorCodes('&', line))
+                            .collect(Collectors.toList());
+                    int customModelData = itemSection.getInt("customModelData", 0);
+
+                    String function = itemSection.getString("function");
+                    ItemStack item = createItem(type, name, lore, customModelData, function);
+
+                    if (permission != null) {
+                        if (player.hasPermission(permission) && key.equalsIgnoreCase("vip")) {
+                            for (int position : positions) {
+                                inventory.setItem(position, item.clone());
+                            }
+                        } else if (!player.hasPermission(permission) && key.equalsIgnoreCase("no_permissions")) {
+                            for (int position : positions) {
+                                inventory.setItem(position, item.clone());
+                            }
                         }
                     } else {
-                        plugin.getLogger().warning("Failed to create item from config for key: " + key);
+                        for (int position : positions) {
+                            if (key.equalsIgnoreCase("profile_slot")) {
+                                List<Profile> profiles = plugin.getProfileManager().getPlayerProfiles(player.getUniqueId());
+                                if (profiles != null) {
+                                    for (int i = 0; i < profiles.size() && i < positions.size(); i++) {
+                                        Profile profile = profiles.get(i);
+                                        UUID profileUUID = profile.getProfileId();
+                                        String replacedName = profile.getName();
+                                        name = ChatColor.translateAlternateColorCodes('&', itemSection.getString("name").replace("%profile_name%", profile.getName()));
+                                        item = createItem(type, name, lore, customModelData, function, profileUUID);
+                                        inventory.setItem(positions.get(i), item.clone());
+                                    }
+                                }
+                            } else {
+                                inventory.setItem(position, item.clone());
+                            }
+                        }
                     }
-                } else {
-                    plugin.getLogger().warning("Invalid item section for key: " + key);
                 }
             }
-        } else {
-            plugin.getLogger().warning("No items found in config section: gui.items");
         }
+    }
 
+    private ItemStack createItem(String type, String name, List<String> lore, int customModelData, String function, UUID profileUUID) {
+        Material material = Material.matchMaterial(type);
+        if (material == null) {
+            material = Material.BARRIER;
+        }
+        ItemStack item = new ItemStack(material);
+        ItemMeta meta = item.getItemMeta();
+        meta.setDisplayName(name);
+
+        // Set the function in the item meta
+        meta.getPersistentDataContainer().set(plugin.getActionKey(), PersistentDataType.STRING, function);
+
+        // Set the profile UUID in the item meta
+        meta.getPersistentDataContainer().set(plugin.getProfileKey(), PersistentDataType.STRING, profileUUID.toString());
+
+        meta.setLore(lore);
+
+        if (customModelData > 0) {
+            meta.setCustomModelData(customModelData);
+        }
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    private ItemStack createItem(String type, String name, List<String> lore, int customModelData, String function) {
+        Material material = Material.matchMaterial(type);
+        if (material == null) {
+            material = Material.BARRIER;
+        }
+        ItemStack item = new ItemStack(material);
+        ItemMeta meta = item.getItemMeta();
+        meta.setDisplayName(name);
+
+        // Set the function in the item meta
+        meta.getPersistentDataContainer().set(plugin.getActionKey(), PersistentDataType.STRING, function);
+
+        meta.setLore(lore);
+
+        if (customModelData > 0) {
+            meta.setCustomModelData(customModelData);
+        }
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    public void openInventory() {
         player.openInventory(inventory);
-    }
-
-    private ItemStack createProfileItem(Profile profile) {
-        FileConfiguration config = plugin.getProfileSelection().get();
-        ConfigurationSection profileSlotSection = config.getConfigurationSection("gui.items.profile_slot");
-        if (profileSlotSection != null) {
-            ItemStack item = createItemFromConfig(profileSlotSection);
-            if (item != null) {
-                ItemMeta meta = item.getItemMeta();
-
-                String displayName = ChatColor.translateAlternateColorCodes('&', profile.getName());
-                meta.setDisplayName(displayName);
-
-                List<String> lore = new ArrayList<>();
-                lore.add("Level: " + profile.getLevel());
-
-                meta.setLore(lore);
-                item.setItemMeta(meta);
-
-                return item;
-            } else {
-                plugin.getLogger().warning("Failed to create profile item for Profile: " + profile.getName());
-            }
-        } else {
-            plugin.getLogger().warning("Invalid profile slot section in config");
-        }
-        return null;
-    }
-
-    private ItemStack createItemFromConfig(ConfigurationSection itemSection) {
-        Material itemType = Material.getMaterial(itemSection.getString("type"));
-        if (itemType != null) {
-            ItemStack item = new ItemStack(itemType, 1);
-            ItemMeta meta = item.getItemMeta();
-
-            String displayName = ChatColor.translateAlternateColorCodes('&', itemSection.getString("name"));
-            meta.setDisplayName(displayName);
-
-            List<String> lore = itemSection.getStringList("lore");
-            List<String> coloredLore = new ArrayList<>();
-            for (String line : lore) {
-                coloredLore.add(ChatColor.translateAlternateColorCodes('&', line));
-            }
-            meta.setLore(coloredLore);
-
-            String action = itemSection.getString("function");
-            if (action != null) {
-                meta.getPersistentDataContainer().set(plugin.getActionKey(), PersistentDataType.STRING, action);
-            }
-
-            item.setItemMeta(meta);
-            return item;
-        } else {
-            plugin.getLogger().warning("Invalid material type specified in config");
-        }
-        return null;
     }
 }

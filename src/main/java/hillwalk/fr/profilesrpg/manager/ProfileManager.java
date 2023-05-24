@@ -53,6 +53,7 @@ public class ProfileManager {
             results = statement.executeQuery();
             if (results.next()) {
                 Profile profile = new Profile(
+                        UUID.fromString(results.getString("profileUUID")),
                         UUID.fromString(results.getString("playerUUID")),
                         results.getString("name"),
                         null // Set the spawn location later
@@ -151,7 +152,7 @@ public class ProfileManager {
 
                 Location spawnLocation = new Location(Bukkit.getWorld(results.getString("world")), x, y, z, yaw, pitch);
 
-                Profile profile = new Profile(profileUUID, name, spawnLocation);
+                Profile profile = new Profile(profileUUID, playerUUID, name, spawnLocation);
                 playerProfiles.add(profile);
             }
         } catch (SQLException e) {

@@ -51,7 +51,7 @@ public class ChatListener implements Listener {
             if (profile == null) {
                 // Le joueur n'a pas de profil existant, créer un nouveau profil
                 Location spawnLocation = player.getLocation(); // Utiliser la position actuelle du joueur comme spawnLocation pour le nouveau profil
-                profile = new Profile(player.getUniqueId(), profileName, spawnLocation); // Créer un nouvel objet Profile
+                profile = new Profile(profile.getProfileId(), player.getUniqueId(), profileName, spawnLocation); // Créer un nouvel objet Profile
                 profileManager.createProfile(player, profile);
                 String profileCreatedMsg = ChatColor.translateAlternateColorCodes('&', plugin.getMessages().get().getString("messages.profile_created"));
                 profileCreatedMsg = profileCreatedMsg.replace("%profile_name%", profileName);

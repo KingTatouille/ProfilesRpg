@@ -23,8 +23,8 @@ public class PlayerJoinListener implements Listener {
         Player player = event.getPlayer();
 
         if (player.isOp() && plugin.getLobbySpawn() && plugin.getProfileSpawn()) {
-            player.sendMessage(plugin.prefix + "The lobby location has not been set. Please do so by using /setlobby.");
-            player.sendMessage(plugin.prefix + "The profile spawn location has not been set. Please do so by using /setprofilespawn.");
+            player.sendMessage(plugin.getPrefix() + "The lobby location has not been set. Please do so by using /setlobby.");
+            player.sendMessage(plugin.getPrefix() + "The profile spawn location has not been set. Please do so by using /setprofilespawn.");
             return;
         }
 
@@ -41,8 +41,8 @@ public class PlayerJoinListener implements Listener {
         new BukkitRunnable() {
             @Override
             public void run() {
-                ProfileInventory profileInventory = new ProfileInventory(plugin);
-                profileInventory.openProfileInventory(player);
+                ProfileInventory profileInventory = new ProfileInventory(plugin, player);
+                profileInventory.openInventory();
             }
         }.runTaskLater(plugin, 1);
     }

@@ -2,6 +2,7 @@ messages:
   prefix: "[&cYourServer&r] "
   invalid_profile_name: "&cInvalid profile name. Please enter a valid name."
   profile_created: "&aProfile created: %profile_name%"
+  enter_name: "Please enter a correct username."
   deconnexion: "Disconnected from the server."
   profile_loaded: "&aProfile loaded: %s"
   profile_not_found: "&cProfile not found: %s"

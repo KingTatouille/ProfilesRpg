@@ -91,7 +91,7 @@ public class InventoryClick implements Listener {
                 player.closeInventory();
                 ChatListener chatListener = new ChatListener(plugin, plugin.getProfileManager());
                 Bukkit.getPluginManager().registerEvents(chatListener, plugin);
-                plugin.getLogger().info("Creating new profile.");
+                player.sendMessage(plugin.getPrefix() + ChatColor.translateAlternateColorCodes('&', plugin.getMessages().get().getString("messages.enter_name")));
                 break;
             case DECORATION:
                 // No specific logic for decoration
@@ -106,4 +106,3 @@ public class InventoryClick implements Listener {
         }
     }
 }
-

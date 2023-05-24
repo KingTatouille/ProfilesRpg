@@ -21,13 +21,14 @@ public class Profile {
     private GameMode gameMode;
     private long lastUsed;
 
-    public Profile(UUID playerId, String name, Location spawnLocation) {
-        this.profileId = UUID.randomUUID();
+    public Profile(UUID profileId, UUID playerId, String name, Location spawnLocation) {
+        this.profileId = profileId;
         this.playerId = playerId;
         this.name = name;
         this.spawnLocation = spawnLocation;
         this.lastUsed = System.currentTimeMillis();
     }
+
 
     public void updateFromPlayer(Player player) {
         this.spawnLocation = player.getLocation();
