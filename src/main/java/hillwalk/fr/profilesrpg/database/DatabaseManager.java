@@ -65,6 +65,7 @@ public class DatabaseManager {
                             "maximumAir INT," +
                             "fireTicks INT," +
                             "gameMode TEXT," +
+                            "user_group TEXT," +
                             "allowFlight BOOLEAN," +
                             "fallDistance REAL" +
                             ")"

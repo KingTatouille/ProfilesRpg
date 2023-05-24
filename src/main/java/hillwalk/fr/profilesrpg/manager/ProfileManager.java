@@ -7,6 +7,7 @@ import net.luckperms.api.LuckPerms;
 import net.luckperms.api.model.user.User;
 import net.luckperms.api.node.Node;
 import net.luckperms.api.node.NodeType;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -33,7 +34,12 @@ public class ProfileManager {
         this.profiles = new HashMap<>();
     }
 
-    public void loadProfile(Player player, UUID profileUUID) {
+    public void loadProfile(UUID playerUUID, UUID profileUUID) {
+        Player player = this.plugin.getServer().getPlayer(playerUUID);
+        if (player == null) {
+            this.plugin.getLogger().severe("Could not find player with UUID: " + playerUUID);
+            return;
+        }
         try {
             Connection connection = databaseManager.getConnection();
             PreparedStatement statement;
@@ -52,7 +58,7 @@ public class ProfileManager {
                         null // Set the spawn location later
                 );
 
-                profile.setGroup(results.getString("group"));
+                profile.setGroup(results.getString("user_group"));
                 // Set other profile data
                 profile.setHealth(results.getDouble("health"));
                 profile.setFoodLevel(results.getInt("food"));
@@ -123,6 +129,38 @@ public class ProfileManager {
         return null;
     }
 
+    public List<Profile> getPlayerProfiles(UUID playerUUID) {
+        List<Profile> playerProfiles = new ArrayList<>();
+
+        try {
+            Connection connection = databaseManager.getConnection();
+            PreparedStatement statement = connection.prepareStatement(
+                    "SELECT * FROM profiles LEFT JOIN locations ON profiles.profileUUID = locations.profileUUID WHERE profiles.playerUUID = ?"
+            );
+            statement.setString(1, playerUUID.toString());
+            ResultSet results = statement.executeQuery();
+            while (results.next()) {
+                UUID profileUUID = UUID.fromString(results.getString("profileUUID"));
+                String name = results.getString("name");
+
+                double x = results.getDouble("x");
+                double y = results.getDouble("y");
+                double z = results.getDouble("z");
+                float yaw = results.getFloat("yaw");
+                float pitch = results.getFloat("pitch");
+
+                Location spawnLocation = new Location(Bukkit.getWorld(results.getString("world")), x, y, z, yaw, pitch);
+
+                Profile profile = new Profile(profileUUID, name, spawnLocation);
+                playerProfiles.add(profile);
+            }
+        } catch (SQLException e) {
+            plugin.getLogger().severe("Could not fetch player profiles: " + e.getMessage());
+        }
+
+        return playerProfiles;
+    }
+
     public Profile getProfile(UUID playerUUID) {
         List<Profile> playerProfiles = profiles.get(playerUUID);
         if (playerProfiles != null) {
@@ -139,18 +177,42 @@ public class ProfileManager {
         try {
             Connection connection = databaseManager.getConnection();
             PreparedStatement statement = connection.prepareStatement(
-                    "INSERT INTO profiles (profileUUID, playerUUID, name, group) VALUES (?, ?, ?, ?)"
+                    "INSERT INTO profiles (profileUUID, playerUUID, name, user_group) VALUES (?, ?, ?, ?)"
             );
             UUID profileUUID = profile.getProfileId();
+            String userGroup = profile.getGroup();
             statement.setString(1, profileUUID.toString());
             statement.setString(2, profile.getPlayerId().toString());
             statement.setString(3, profile.getName());
+            if (userGroup != null) {
+                statement.setString(4, userGroup);
+            } else {
+                statement.setString(4, "null");
+            }
             statement.executeUpdate();
+
+            // Save the spawn location
+            Location spawnLocation = profile.getSpawnLocation();
+            if (spawnLocation != null) {
+                statement = connection.prepareStatement(
+                        "INSERT INTO locations (profileUUID, world, x, y, z, pitch, yaw) VALUES (?, ?, ?, ?, ?, ?, ?)"
+                );
+                statement.setString(1, profileUUID.toString());
+                statement.setString(2, spawnLocation.getWorld().getName());
+                statement.setDouble(3, spawnLocation.getX());
+                statement.setDouble(4, spawnLocation.getY());
+                statement.setDouble(5, spawnLocation.getZ());
+                statement.setFloat(6, spawnLocation.getPitch());
+                statement.setFloat(7, spawnLocation.getYaw());
+                statement.executeUpdate();
+            }
+
             addProfile(player.getUniqueId(), profile);
         } catch (SQLException e) {
             this.plugin.getLogger().severe("Could not create profile: " + e.getMessage());
         }
     }
+
 
     public void saveProfile(Player player, UUID profileUUID) {
         try {
@@ -161,16 +223,24 @@ public class ProfileManager {
             Profile profile = getProfile(player.getUniqueId(), profileUUID);
             if (profile != null) {
                 statement = connection.prepareStatement(
-                        "UPDATE profiles SET health = ?, food = ?, level = ?, exp = ?, group = ? WHERE profileUUID = ?"
+                        "UPDATE profiles SET health = ?, food = ?, level = ?, exp = ?, user_group = ? WHERE profileUUID = ?"
                 );
                 statement.setDouble(1, profile.getHealth());
                 statement.setInt(2, profile.getFoodLevel());
                 statement.setInt(3, profile.getLevel());
                 statement.setDouble(4, profile.getExp());
-                statement.setString(5, profileUUID.toString());
-                statement.setString(6, profile.getGroup());
+
+                // Check if group is null
+                if (profile.getGroup() == null) {
+                    statement.setString(5, "null"); // Set the group as SQL NULL
+                } else {
+                    statement.setString(5, profile.getGroup());
+                }
+
+                statement.setString(6, profileUUID.toString());
                 statement.executeUpdate();
             }
+
 
             // Save location data
             if (profile != null) {
