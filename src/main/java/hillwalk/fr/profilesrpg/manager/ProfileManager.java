@@ -8,11 +8,14 @@ import net.luckperms.api.model.user.User;
 import net.luckperms.api.node.Node;
 import net.luckperms.api.node.NodeType;
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -33,6 +36,7 @@ public class ProfileManager {
         this.databaseManager = databaseManager;
         this.profiles = new HashMap<>();
     }
+
 
     public void loadProfile(UUID playerUUID, UUID profileUUID) {
         Player player = this.plugin.getServer().getPlayer(playerUUID);
@@ -59,14 +63,16 @@ public class ProfileManager {
                         null // Set the spawn location later
                 );
 
+                //Renommer le joueur lors du chargement du profile.
+                player.setDisplayName(results.getString("name"));
+
                 profile.setGroup(results.getString("user_group"));
                 // Set other profile data
                 profile.setHealth(results.getDouble("health"));
                 profile.setFoodLevel(results.getInt("food"));
                 profile.setLevel(results.getInt("level"));
                 profile.setExp((float) results.getDouble("exp"));
-                // And so on for the rest of the profile data...
-                createProfile(player, profile);
+
             } else {
                 this.plugin.getLogger().severe("Could not find profile with UUID: " + profileUUID);
             }
@@ -110,6 +116,16 @@ public class ProfileManager {
 
                 player.getInventory().setItem(slot, item);
             }
+
+            // Set player in lobby status
+            plugin.getPlayerLobbyStatusManager().setPlayerInLobby(player, false);
+
+            // Set player to spectate mode to prevent movement and interaction
+            player.setGameMode(GameMode.SURVIVAL);
+
+            // Add blindness effect
+            player.removePotionEffect(PotionEffectType.BLINDNESS);
+
 
         } catch (SQLException e) {
             this.plugin.getLogger().severe("Could not load profile: " + e.getMessage());
@@ -226,10 +242,10 @@ public class ProfileManager {
                 statement = connection.prepareStatement(
                         "UPDATE profiles SET health = ?, food = ?, level = ?, exp = ?, user_group = ? WHERE profileUUID = ?"
                 );
-                statement.setDouble(1, profile.getHealth());
-                statement.setInt(2, profile.getFoodLevel());
-                statement.setInt(3, profile.getLevel());
-                statement.setDouble(4, profile.getExp());
+                statement.setDouble(1, player.getHealth());
+                statement.setInt(2, player.getFoodLevel());
+                statement.setInt(3, player.getLevel());
+                statement.setDouble(4, player.getExp());
 
                 // Check if group is null
                 if (profile.getGroup() == null) {
@@ -288,6 +304,9 @@ public class ProfileManager {
                     }
                 }
             }
+
+            //Ajout de la location du spawn
+            profile.setSpawnLocation(player.getLocation());
 
         } catch (SQLException e) {
             this.plugin.getLogger().severe("Could not save profile: " + e.getMessage());

@@ -22,7 +22,7 @@ public class PlayerJoinListener implements Listener {
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
 
-        if (player.isOp() && plugin.getLobbySpawn() && plugin.getProfileSpawn()) {
+        if (player.isOp() || plugin.getLobbySpawn() && plugin.getProfileSpawn()) {
             player.sendMessage(plugin.getPrefix() + "The lobby location has not been set. Please do so by using /setlobby.");
             player.sendMessage(plugin.getPrefix() + "The profile spawn location has not been set. Please do so by using /setprofilespawn.");
             return;

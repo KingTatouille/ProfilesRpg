@@ -3,6 +3,7 @@ package hillwalk.fr.profilesrpg.listener;
 import hillwalk.fr.profilesrpg.Profile;
 import hillwalk.fr.profilesrpg.ProfilesRpg;
 import hillwalk.fr.profilesrpg.manager.ProfileManager;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -51,11 +52,17 @@ public class ChatListener implements Listener {
             if (profile == null) {
                 // Le joueur n'a pas de profil existant, créer un nouveau profil
                 Location spawnLocation = player.getLocation(); // Utiliser la position actuelle du joueur comme spawnLocation pour le nouveau profil
-                profile = new Profile(profile.getProfileId(), player.getUniqueId(), profileName, spawnLocation); // Créer un nouvel objet Profile
+                profile = new Profile(UUID.randomUUID(), player.getUniqueId(), profileName, spawnLocation); // Créer un nouvel objet Profile
                 profileManager.createProfile(player, profile);
+                player.setDisplayName(profileName); //Set the name
                 String profileCreatedMsg = ChatColor.translateAlternateColorCodes('&', plugin.getMessages().get().getString("messages.profile_created"));
                 profileCreatedMsg = profileCreatedMsg.replace("%profile_name%", profileName);
                 player.sendMessage(profileCreatedMsg);
+                player.teleportAsync(new Location(Bukkit.getWorld(plugin.getConfig().getString("profile.spawn.world")),
+                        plugin.getConfig().getDouble("profile.spawn.x"),
+                        plugin.getConfig().getDouble("profile.spawn.y"),
+                        plugin.getConfig().getDouble("profile.spawn.z")
+                        ));
             }
 
             // Désenregistre l'écouteur d'événements de chat
