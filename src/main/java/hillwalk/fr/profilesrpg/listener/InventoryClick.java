@@ -81,8 +81,8 @@ public class InventoryClick implements Listener {
                     player.sendMessage("Profile not found.");
                     return;
                 }
-                plugin.getLogger().info("Detected profile: " + profile.getName());
-               // profile.applyToPlayer(player);
+                player.closeInventory();
+                plugin.getLogger().info("Detected profile: " + profile.getName() + " UUID: " + profile.getProfileId());
                 plugin.getProfileManager().loadProfile(player.getUniqueId(), profileUUID);
                 plugin.getLogger().info("Loading profile: " + profile.getName());
                 player.sendMessage("Profile " + profile.getName() + " loaded.");

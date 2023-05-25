@@ -49,32 +49,39 @@ public class ProfileManager {
             PreparedStatement statement;
             ResultSet results;
 
-            // Load profile data
-            statement = connection.prepareStatement(
-                    "SELECT * FROM profiles WHERE profileUUID = ?"
-            );
-            statement.setString(1, profileUUID.toString());
-            results = statement.executeQuery();
-            if (results.next()) {
-                Profile profile = new Profile(
-                        UUID.fromString(results.getString("profileUUID")),
-                        UUID.fromString(results.getString("playerUUID")),
-                        results.getString("name"),
-                        null // Set the spawn location later
+            // Check if the profile already exists in memory
+            Profile profile = getProfile(playerUUID, profileUUID);
+            if (profile == null) {
+                // Load profile data from the database
+                statement = connection.prepareStatement(
+                        "SELECT * FROM profiles WHERE profileUUID = ?"
                 );
+                statement.setString(1, profileUUID.toString());
+                results = statement.executeQuery();
+                if (results.next()) {
+                    profile = new Profile(
+                            UUID.fromString(results.getString("profileUUID")),
+                            UUID.fromString(results.getString("playerUUID")),
+                            results.getString("name"),
+                            null // Set the spawn location later
+                    );
 
-                //Renommer le joueur lors du chargement du profile.
-                player.setDisplayName(results.getString("name"));
+                    // Rename the player during profile loading
+                    player.setDisplayName(results.getString("name"));
 
-                profile.setGroup(results.getString("user_group"));
-                // Set other profile data
-                profile.setHealth(results.getDouble("health"));
-                profile.setFoodLevel(results.getInt("food"));
-                profile.setLevel(results.getInt("level"));
-                profile.setExp((float) results.getDouble("exp"));
+                    profile.setGroup(results.getString("user_group"));
+                    // Set other profile data
+                    profile.setHealth(results.getDouble("health"));
+                    profile.setFoodLevel(results.getInt("food"));
+                    profile.setLevel(results.getInt("level"));
+                    profile.setExp((float) results.getDouble("exp"));
 
-            } else {
-                this.plugin.getLogger().severe("Could not find profile with UUID: " + profileUUID);
+                    // Add the profile to the memory
+                    addProfile(playerUUID, profile);
+                } else {
+                    this.plugin.getLogger().severe("Could not find profile with UUID: " + profileUUID);
+                    return;
+                }
             }
 
             // Load location data
@@ -85,18 +92,15 @@ public class ProfileManager {
             results = statement.executeQuery();
             if (results.next()) {
                 // Load the location into the player...
-                Profile profile = getProfile(player.getUniqueId(), profileUUID);
-                if (profile != null) {
-                    Location spawnLocation = new Location(
-                            player.getWorld(),
-                            results.getDouble("x"),
-                            results.getDouble("y"),
-                            results.getDouble("z"),
-                            results.getFloat("yaw"),
-                            results.getFloat("pitch")
-                    );
-                    profile.setSpawnLocation(spawnLocation);
-                }
+                Location spawnLocation = new Location(
+                        player.getWorld(),
+                        results.getDouble("x"),
+                        results.getDouble("y"),
+                        results.getDouble("z"),
+                        results.getFloat("yaw"),
+                        results.getFloat("pitch")
+                );
+                player.teleport(spawnLocation);
             }
 
             // Load inventory data
@@ -123,7 +127,7 @@ public class ProfileManager {
             // Set player to spectate mode to prevent movement and interaction
             player.setGameMode(GameMode.SURVIVAL);
 
-            // Add blindness effect
+            // Remove blindness effect
             player.removePotionEffect(PotionEffectType.BLINDNESS);
 
 
@@ -133,6 +137,7 @@ public class ProfileManager {
             throw new RuntimeException(e);
         }
     }
+
 
     public Profile getProfile(UUID playerUUID, UUID profileUUID) {
         List<Profile> playerProfiles = profiles.get(playerUUID);
