@@ -30,25 +30,6 @@ public class Profile {
     }
 
 
-    public void updateFromPlayer(Player player) {
-        this.spawnLocation = player.getLocation();
-        this.health = player.getHealth();
-        this.foodLevel = player.getFoodLevel();
-        this.level = player.getLevel();
-        this.exp = player.getExp();
-        this.gameMode = player.getGameMode();
-        this.lastUsed = System.currentTimeMillis();
-    }
-
-    public void applyToPlayer(Player player) {
-        player.teleport(this.spawnLocation);
-        player.setHealth(this.health);
-        player.setFoodLevel(this.foodLevel);
-        player.setLevel(this.level);
-        player.setExp(this.exp);
-        player.setGameMode(this.gameMode);
-    }
-
     public UUID getProfileId() {
         return this.profileId;
     }

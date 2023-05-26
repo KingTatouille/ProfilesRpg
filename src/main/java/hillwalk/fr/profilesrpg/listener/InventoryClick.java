@@ -74,14 +74,7 @@ public class InventoryClick implements Listener {
                     return;
                 }
                 String profileUUIDString = meta.getPersistentDataContainer().get(plugin.getProfileKey(), PersistentDataType.STRING);
-                UUID profileUUID;
-                try {
-                    profileUUID = UUID.fromString(profileUUIDString);
-                } catch (IllegalArgumentException e) {
-                    plugin.getLogger().warning("Invalid profile UUID: " + profileUUIDString);
-                    player.sendMessage("Invalid profile.");
-                    return;
-                }
+                UUID profileUUID = UUID.fromString(profileUUIDString);
                 Profile profile = plugin.getProfileManager().getProfile(player.getUniqueId(), profileUUID);
                 if (profile == null) {
                     plugin.getLogger().info("No profile found for UUID: " + profileUUIDString);
@@ -89,8 +82,7 @@ public class InventoryClick implements Listener {
                     return;
                 }
                 player.closeInventory();
-                plugin.getLogger().info("Detected profile: " + profile.getName());
-               // profile.applyToPlayer(player);
+                plugin.getLogger().info("Detected profile: " + profile.getName() + " UUID: " + profile.getProfileId());
                 plugin.getProfileManager().loadProfile(player.getUniqueId(), profileUUID);
                 plugin.getLogger().info("Loading profile: " + profile.getName());
                 player.sendMessage("Profile " + profile.getName() + " loaded.");

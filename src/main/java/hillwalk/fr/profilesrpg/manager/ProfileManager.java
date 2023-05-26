@@ -44,35 +44,44 @@ public class ProfileManager {
             this.plugin.getLogger().severe("Could not find player with UUID: " + playerUUID);
             return;
         }
-
-        Profile profile = getProfile(playerUUID, profileUUID);
-        if (profile == null) {
-            this.plugin.getLogger().severe("No profile found for UUID: " + profileUUID);
-            player.sendMessage("Profile not found.");
-            return;
-        }
-
         try {
             Connection connection = databaseManager.getConnection();
             PreparedStatement statement;
             ResultSet results;
 
-            // Load profile data
-            statement = connection.prepareStatement(
-                    "SELECT * FROM profiles WHERE profileUUID = ?"
-            );
-            statement.setString(1, profileUUID.toString());
-            results = statement.executeQuery();
-            if (results.next()) {
-                // Set other profile data
-                profile.setHealth(results.getDouble("health"));
-                profile.setFoodLevel(results.getInt("food"));
-                profile.setLevel(results.getInt("level"));
-                profile.setExp((float) results.getDouble("exp"));
-            } else {
-                this.plugin.getLogger().severe("Could not find profile with UUID: " + profileUUID);
-                player.sendMessage("Profile not found.");
-                return;
+            // Check if the profile already exists in memory
+            Profile profile = getProfile(playerUUID, profileUUID);
+            if (profile == null) {
+                // Load profile data from the database
+                statement = connection.prepareStatement(
+                        "SELECT * FROM profiles WHERE profileUUID = ?"
+                );
+                statement.setString(1, profileUUID.toString());
+                results = statement.executeQuery();
+                if (results.next()) {
+                    profile = new Profile(
+                            UUID.fromString(results.getString("profileUUID")),
+                            UUID.fromString(results.getString("playerUUID")),
+                            results.getString("name"),
+                            null // Set the spawn location later
+                    );
+
+                    // Rename the player during profile loading
+                    player.setDisplayName(results.getString("name"));
+
+                    profile.setGroup(results.getString("user_group"));
+                    // Set other profile data
+                    profile.setHealth(results.getDouble("health"));
+                    profile.setFoodLevel(results.getInt("food"));
+                    profile.setLevel(results.getInt("level"));
+                    profile.setExp((float) results.getDouble("exp"));
+
+                    // Add the profile to the memory
+                    addProfile(playerUUID, profile);
+                } else {
+                    this.plugin.getLogger().severe("Could not find profile with UUID: " + profileUUID);
+                    return;
+                }
             }
 
             // Load location data
@@ -82,7 +91,7 @@ public class ProfileManager {
             statement.setString(1, profileUUID.toString());
             results = statement.executeQuery();
             if (results.next()) {
-                // Load the location into the profile
+                // Load the location into the player...
                 Location spawnLocation = new Location(
                         player.getWorld(),
                         results.getDouble("x"),
@@ -91,7 +100,7 @@ public class ProfileManager {
                         results.getFloat("yaw"),
                         results.getFloat("pitch")
                 );
-                profile.setSpawnLocation(spawnLocation);
+                player.teleport(spawnLocation);
             }
 
             // Load inventory data
@@ -112,29 +121,23 @@ public class ProfileManager {
                 player.getInventory().setItem(slot, item);
             }
 
-            // Set player display name
-            player.setDisplayName(profile.getName());
-
             // Set player in lobby status
             plugin.getPlayerLobbyStatusManager().setPlayerInLobby(player, false);
 
-            // Teleport player to spawn location
-            player.teleport(profile.getSpawnLocation());
-
-            // Set player to survival mode
+            // Set player to spectate mode to prevent movement and interaction
             player.setGameMode(GameMode.SURVIVAL);
 
             // Remove blindness effect
             player.removePotionEffect(PotionEffectType.BLINDNESS);
 
-            player.sendMessage("Profile " + profile.getName() + " loaded.");
+
         } catch (SQLException e) {
             this.plugin.getLogger().severe("Could not load profile: " + e.getMessage());
-            player.sendMessage("Failed to load profile.");
         } catch (InvalidConfigurationException e) {
             throw new RuntimeException(e);
         }
     }
+
 
     public Profile getProfile(UUID playerUUID, UUID profileUUID) {
         List<Profile> playerProfiles = profiles.get(playerUUID);
