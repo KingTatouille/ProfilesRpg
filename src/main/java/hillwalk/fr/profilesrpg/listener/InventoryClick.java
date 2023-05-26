@@ -74,13 +74,21 @@ public class InventoryClick implements Listener {
                     return;
                 }
                 String profileUUIDString = meta.getPersistentDataContainer().get(plugin.getProfileKey(), PersistentDataType.STRING);
-                UUID profileUUID = UUID.fromString(profileUUIDString);
+                UUID profileUUID;
+                try {
+                    profileUUID = UUID.fromString(profileUUIDString);
+                } catch (IllegalArgumentException e) {
+                    plugin.getLogger().warning("Invalid profile UUID: " + profileUUIDString);
+                    player.sendMessage("Invalid profile.");
+                    return;
+                }
                 Profile profile = plugin.getProfileManager().getProfile(player.getUniqueId(), profileUUID);
                 if (profile == null) {
                     plugin.getLogger().info("No profile found for UUID: " + profileUUIDString);
                     player.sendMessage("Profile not found.");
                     return;
                 }
+                player.closeInventory();
                 plugin.getLogger().info("Detected profile: " + profile.getName());
                // profile.applyToPlayer(player);
                 plugin.getProfileManager().loadProfile(player.getUniqueId(), profileUUID);

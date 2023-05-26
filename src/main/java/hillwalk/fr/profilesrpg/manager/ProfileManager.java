@@ -44,6 +44,14 @@ public class ProfileManager {
             this.plugin.getLogger().severe("Could not find player with UUID: " + playerUUID);
             return;
         }
+
+        Profile profile = getProfile(playerUUID, profileUUID);
+        if (profile == null) {
+            this.plugin.getLogger().severe("No profile found for UUID: " + profileUUID);
+            player.sendMessage("Profile not found.");
+            return;
+        }
+
         try {
             Connection connection = databaseManager.getConnection();
             PreparedStatement statement;
@@ -56,25 +64,15 @@ public class ProfileManager {
             statement.setString(1, profileUUID.toString());
             results = statement.executeQuery();
             if (results.next()) {
-                Profile profile = new Profile(
-                        UUID.fromString(results.getString("profileUUID")),
-                        UUID.fromString(results.getString("playerUUID")),
-                        results.getString("name"),
-                        null // Set the spawn location later
-                );
-
-                //Renommer le joueur lors du chargement du profile.
-                player.setDisplayName(results.getString("name"));
-
-                profile.setGroup(results.getString("user_group"));
                 // Set other profile data
                 profile.setHealth(results.getDouble("health"));
                 profile.setFoodLevel(results.getInt("food"));
                 profile.setLevel(results.getInt("level"));
                 profile.setExp((float) results.getDouble("exp"));
-
             } else {
                 this.plugin.getLogger().severe("Could not find profile with UUID: " + profileUUID);
+                player.sendMessage("Profile not found.");
+                return;
             }
 
             // Load location data
@@ -84,19 +82,16 @@ public class ProfileManager {
             statement.setString(1, profileUUID.toString());
             results = statement.executeQuery();
             if (results.next()) {
-                // Load the location into the player...
-                Profile profile = getProfile(player.getUniqueId(), profileUUID);
-                if (profile != null) {
-                    Location spawnLocation = new Location(
-                            player.getWorld(),
-                            results.getDouble("x"),
-                            results.getDouble("y"),
-                            results.getDouble("z"),
-                            results.getFloat("yaw"),
-                            results.getFloat("pitch")
-                    );
-                    profile.setSpawnLocation(spawnLocation);
-                }
+                // Load the location into the profile
+                Location spawnLocation = new Location(
+                        player.getWorld(),
+                        results.getDouble("x"),
+                        results.getDouble("y"),
+                        results.getDouble("z"),
+                        results.getFloat("yaw"),
+                        results.getFloat("pitch")
+                );
+                profile.setSpawnLocation(spawnLocation);
             }
 
             // Load inventory data
@@ -117,18 +112,25 @@ public class ProfileManager {
                 player.getInventory().setItem(slot, item);
             }
 
+            // Set player display name
+            player.setDisplayName(profile.getName());
+
             // Set player in lobby status
             plugin.getPlayerLobbyStatusManager().setPlayerInLobby(player, false);
 
-            // Set player to spectate mode to prevent movement and interaction
+            // Teleport player to spawn location
+            player.teleport(profile.getSpawnLocation());
+
+            // Set player to survival mode
             player.setGameMode(GameMode.SURVIVAL);
 
-            // Add blindness effect
+            // Remove blindness effect
             player.removePotionEffect(PotionEffectType.BLINDNESS);
 
-
+            player.sendMessage("Profile " + profile.getName() + " loaded.");
         } catch (SQLException e) {
             this.plugin.getLogger().severe("Could not load profile: " + e.getMessage());
+            player.sendMessage("Failed to load profile.");
         } catch (InvalidConfigurationException e) {
             throw new RuntimeException(e);
         }
