@@ -63,20 +63,23 @@ public class ProfileInventory {
                             }
                         }
                     } else {
-                        for (int position : positions) {
-                            if (key.equalsIgnoreCase("profile_slot")) {
-                                List<Profile> profiles = plugin.getProfileManager().getPlayerProfiles(player.getUniqueId());
-                                if (profiles != null) {
-                                    for (int i = 0; i < profiles.size() && i < positions.size(); i++) {
-                                        Profile profile = profiles.get(i);
-                                        UUID profileUUID = profile.getProfileId();
-                                        String replacedName = profile.getName();
-                                        name = ChatColor.translateAlternateColorCodes('&', itemSection.getString("name").replace("%profile_name%", profile.getName()));
-                                        item = createItem(type, name, lore, customModelData, function, profileUUID);
-                                        inventory.setItem(positions.get(i), item.clone());
-                                    }
-                                }
-                            } else {
+                        List<Profile> profiles = null;
+                        if (key.equalsIgnoreCase("profile_slot")) {
+                            profiles = plugin.getProfileManager().getPlayerProfiles(player.getUniqueId());
+                        }
+
+                        if (key.equalsIgnoreCase("profile_slot") && profiles != null) {
+                            for (int i = 0; i < Math.min(profiles.size(), positions.size()); i++) {
+                                Profile profile = profiles.get(i);
+                                UUID profileUUID = profile.getProfileId();
+                                String replacedName = profile.getName();
+                                name = ChatColor.translateAlternateColorCodes('&', itemSection.getString("name").replace("%profile_name%", profile.getName()));
+                                item = createItem(type, name, lore, customModelData, function, profileUUID);
+                                inventory.setItem(positions.get(i), item.clone());
+                            }
+                        } else {
+                            for (int position : positions) {
+                                item = createItem(type, name, lore, customModelData, function);
                                 inventory.setItem(position, item.clone());
                             }
                         }

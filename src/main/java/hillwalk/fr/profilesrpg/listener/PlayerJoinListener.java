@@ -39,6 +39,10 @@ public class PlayerJoinListener implements Listener {
         // Set player to spectate mode to prevent movement and interaction
         player.setGameMode(GameMode.SPECTATOR);
 
+        player.setHealth(20);
+        player.setFoodLevel(20);
+        player.setLevel(1);
+
         // Add blindness effect
         player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, Integer.MAX_VALUE, 255, false, false));
 

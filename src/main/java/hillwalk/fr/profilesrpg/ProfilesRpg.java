@@ -9,6 +9,7 @@ import hillwalk.fr.profilesrpg.listener.PlayerJoinListener;
 import hillwalk.fr.profilesrpg.listener.PlayerQuitListener;
 import hillwalk.fr.profilesrpg.manager.PlayerLobbyStatusManager;
 import hillwalk.fr.profilesrpg.manager.ProfileManager;
+import hillwalk.fr.profilesrpg.support.ProfilesRpgMMOCoreIntegration;
 import net.luckperms.api.LuckPerms;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -16,6 +17,10 @@ import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 
 public class ProfilesRpg extends JavaPlugin {
@@ -28,6 +33,9 @@ public class ProfilesRpg extends JavaPlugin {
     private CustomConfig messages;
     public static String prefix;
     private PlayerLobbyStatusManager playerLobbyStatusManager;
+
+    private Map<UUID, UUID> selectedProfiles = new HashMap<>();
+    private ProfilesRpgMMOCoreIntegration mmocoreIntegration;
 
     @Override
     public void onEnable() {
@@ -45,6 +53,7 @@ public class ProfilesRpg extends JavaPlugin {
 
         this.playerLobbyStatusManager = new PlayerLobbyStatusManager();
         this.profileManager = new ProfileManager(this, this.databaseManager);
+        mmocoreIntegration = new ProfilesRpgMMOCoreIntegration(this);
 
         if (getServer().getPluginManager().getPlugin("LuckPerms") != null) {
             this.luckPermsApi = Bukkit.getServicesManager().getRegistration(LuckPerms.class).getProvider();
@@ -151,6 +160,14 @@ public class ProfilesRpg extends JavaPlugin {
 
     public NamespacedKey getActionKey() {
         return new NamespacedKey(this, "item_action");
+    }
+
+    public void selectProfile(UUID playerUUID, UUID profileUUID) {
+        selectedProfiles.put(playerUUID, profileUUID);
+    }
+
+    public UUID getSelectedProfile(UUID playerUUID) {
+        return selectedProfiles.get(playerUUID);
     }
 
 }

@@ -68,13 +68,22 @@ public class ProfileManager {
 
                     // Rename the player during profile loading
                     player.setDisplayName(results.getString("name"));
+                    plugin.getLogger().info("Name : " + results.getString("name"));
 
                     profile.setGroup(results.getString("user_group"));
+
                     // Set other profile data
                     profile.setHealth(results.getDouble("health"));
+                    player.setHealth(results.getDouble("health"));
+
                     profile.setFoodLevel(results.getInt("food"));
+                    player.setFoodLevel(results.getInt("food"));
+
                     profile.setLevel(results.getInt("level"));
+                    player.setLevel(results.getInt("level"));
+
                     profile.setExp((float) results.getDouble("exp"));
+                    player.setExp((float) results.getDouble("exp"));
 
                     // Add the profile to the memory
                     addProfile(playerUUID, profile);
@@ -100,7 +109,10 @@ public class ProfileManager {
                         results.getFloat("yaw"),
                         results.getFloat("pitch")
                 );
+                this.plugin.getLogger().info("Loading spawn location: " + spawnLocation);
                 player.teleport(spawnLocation);
+            } else {
+                this.plugin.getLogger().info("No spawn location found for profile UUID: " + profileUUID);
             }
 
             // Load inventory data
@@ -119,7 +131,11 @@ public class ProfileManager {
                 ItemStack item = config.getItemStack("item");
 
                 player.getInventory().setItem(slot, item);
+
+                // Ajout d'un log pour le débogage
+                this.plugin.getLogger().info("Loaded item in slot " + slot + " with data: " + itemData);
             }
+
 
             // Set player in lobby status
             plugin.getPlayerLobbyStatusManager().setPlayerInLobby(player, false);
@@ -152,6 +168,11 @@ public class ProfileManager {
     }
 
     public List<Profile> getPlayerProfiles(UUID playerUUID) {
+        // If profiles are already loaded, return them
+        if (profiles.containsKey(playerUUID)) {
+            return profiles.get(playerUUID);
+        }
+
         List<Profile> playerProfiles = new ArrayList<>();
 
         try {
@@ -176,6 +197,9 @@ public class ProfileManager {
                 Profile profile = new Profile(profileUUID, playerUUID, name, spawnLocation);
                 playerProfiles.add(profile);
             }
+
+            // Add the profiles to the map
+            profiles.put(playerUUID, playerProfiles);
         } catch (SQLException e) {
             plugin.getLogger().severe("Could not fetch player profiles: " + e.getMessage());
         }
@@ -183,17 +207,6 @@ public class ProfileManager {
         return playerProfiles;
     }
 
-    public Profile getProfile(UUID playerUUID) {
-        List<Profile> playerProfiles = profiles.get(playerUUID);
-        if (playerProfiles != null) {
-            for (Profile profile : playerProfiles) {
-                if (profile.getProfileId().equals(playerUUID)) {
-                    return profile;
-                }
-            }
-        }
-        return null;
-    }
 
     public void createProfile(Player player, Profile profile) {
         try {
@@ -244,6 +257,11 @@ public class ProfileManager {
             // Save profile data
             Profile profile = getProfile(player.getUniqueId(), profileUUID);
             if (profile != null) {
+
+                // Set spawn location to the current player location
+                profile.setSpawnLocation(player.getLocation());
+                plugin.getLogger().warning(String.valueOf(player.getLocation()));
+
                 statement = connection.prepareStatement(
                         "UPDATE profiles SET health = ?, food = ?, level = ?, exp = ?, user_group = ? WHERE profileUUID = ?"
                 );
@@ -261,26 +279,37 @@ public class ProfileManager {
 
                 statement.setString(6, profileUUID.toString());
                 statement.executeUpdate();
+
+                this.plugin.getLogger().info("Profile data saved.");
             }
 
 
             // Save location data
             if (profile != null) {
                 Location spawnLocation = profile.getSpawnLocation();
+                // Debug: Print spawn location
+                plugin.getLogger().info("Saving spawn location: " + spawnLocation);
+
                 if (spawnLocation != null) {
                     statement = connection.prepareStatement(
-                            "REPLACE INTO locations (profileUUID, world, x, y, z, pitch, yaw) VALUES (?, ?, ?, ?, ?, ?, ?)"
+                            "UPDATE locations SET world = ?, x = ?, y = ?, z = ?, pitch = ?, yaw = ? WHERE profileUUID = ?"
                     );
-                    statement.setString(1, profileUUID.toString());
-                    statement.setString(2, spawnLocation.getWorld().getName());
-                    statement.setDouble(3, spawnLocation.getX());
-                    statement.setDouble(4, spawnLocation.getY());
-                    statement.setDouble(5, spawnLocation.getZ());
-                    statement.setFloat(6, spawnLocation.getPitch());
-                    statement.setFloat(7, spawnLocation.getYaw());
+                    statement.setString(7, profileUUID.toString());
+                    statement.setString(1, spawnLocation.getWorld().getName());
+                    statement.setDouble(2, spawnLocation.getX());
+                    statement.setDouble(3, spawnLocation.getY());
+                    statement.setDouble(4, spawnLocation.getZ());
+                    statement.setFloat(5, spawnLocation.getPitch());
+                    statement.setFloat(6, spawnLocation.getYaw());
                     statement.executeUpdate();
+
+                    // Debug: Confirm location data saved
+                    this.plugin.getLogger().info("Location data saved for UUID: " + profileUUID.toString() + " Location: " + spawnLocation);
+                } else {
+                    this.plugin.getLogger().info("Spawn location is null for UUID: " + profileUUID.toString());
                 }
             }
+
 
             // Save inventory data
             if (profile != null) {
@@ -289,6 +318,8 @@ public class ProfileManager {
                 );
                 statement.setString(1, profileUUID.toString());
                 statement.executeUpdate();
+
+                this.plugin.getLogger().info("Old inventory data cleared.");
 
                 for (int slot = 0; slot < player.getInventory().getSize(); slot++) {
                     ItemStack item = player.getInventory().getItem(slot);
@@ -306,17 +337,20 @@ public class ProfileManager {
 
                         statement.setString(3, itemData);
                         statement.executeUpdate();
+
+                        // Ajout d'un log pour le débogage
+                        this.plugin.getLogger().info("Saved item in slot " + slot + " with data: " + itemData);
                     }
                 }
-            }
 
-            //Ajout de la location du spawn
-            profile.setSpawnLocation(player.getLocation());
+                this.plugin.getLogger().info("Inventory data saved.");
+            }
 
         } catch (SQLException e) {
             this.plugin.getLogger().severe("Could not save profile: " + e.getMessage());
         }
     }
+
 
     public void deleteProfile(UUID profileUUID) {
         try {

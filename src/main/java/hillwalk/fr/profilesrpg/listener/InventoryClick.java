@@ -66,7 +66,7 @@ public class InventoryClick implements Listener {
 
         switch (function) {
             case NO_PERMISSIONS:
-                player.sendMessage(ChatColor.RED + "You don't have VIP permission to access these profile slots.");
+                player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.getMessages().get().getString("messages.not_vip")));
                 break;
             case PROFILE:
                 if (!meta.getPersistentDataContainer().has(plugin.getProfileKey(), PersistentDataType.STRING)) {
@@ -75,6 +75,7 @@ public class InventoryClick implements Listener {
                 }
                 String profileUUIDString = meta.getPersistentDataContainer().get(plugin.getProfileKey(), PersistentDataType.STRING);
                 UUID profileUUID = UUID.fromString(profileUUIDString);
+                plugin.selectProfile(player.getUniqueId(), profileUUID);
                 Profile profile = plugin.getProfileManager().getProfile(player.getUniqueId(), profileUUID);
                 if (profile == null) {
                     plugin.getLogger().info("No profile found for UUID: " + profileUUIDString);
@@ -82,10 +83,10 @@ public class InventoryClick implements Listener {
                     return;
                 }
                 player.closeInventory();
-                plugin.getLogger().info("Detected profile: " + profile.getName() + " UUID: " + profile.getProfileId());
+//                plugin.getLogger().info("Detected profile: " + profile.getName() + " UUID: " + profile.getProfileId());
                 plugin.getProfileManager().loadProfile(player.getUniqueId(), profileUUID);
-                plugin.getLogger().info("Loading profile: " + profile.getName());
-                player.sendMessage("Profile " + profile.getName() + " loaded.");
+//                plugin.getLogger().info("Loading profile: " + profile.getName());
+                player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.getMessages().get().getString("messages.loading_profile").replace("%profile_name%", profile.getName())));
                 break;
             case CREATE_PROFILE:
                 player.closeInventory();
@@ -97,8 +98,8 @@ public class InventoryClick implements Listener {
                 // No specific logic for decoration
                 break;
             case DISCONNECT:
-                player.kickPlayer("You have been disconnected.");
-                plugin.getLogger().info("Player disconnected.");
+                player.kickPlayer(ChatColor.translateAlternateColorCodes('&', plugin.getMessages().get().getString("messages.disconnect")));
+//                plugin.getLogger().info("Player disconnected.");
                 break;
             default:
                 plugin.getLogger().info("Unknown function detected: " + function);

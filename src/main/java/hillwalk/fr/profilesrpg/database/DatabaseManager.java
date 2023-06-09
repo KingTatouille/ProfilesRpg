@@ -49,6 +49,45 @@ public class DatabaseManager {
         try {
             PreparedStatement statement;
 
+            if(plugin.getServer().getPluginManager().getPlugin("MMOCore") == null){
+
+                statement = this.connection.prepareStatement(
+                        "CREATE TABLE IF NOT EXISTS players (" +
+                                "profileUUID TEXT PRIMARY KEY," +
+                                "playerUUID TEXT," +
+                                "name TEXT," +
+                                "health REAL," +
+                                "maxHealth REAL," +
+                                "food INT," +
+                                "level INT," +
+                                "experience REAL," +
+                                "class TEXT," +
+                                "mana REAL," +
+                                "stellium REAL," +
+                                "stamina REAL," +
+                                "lastLogin BIGINT," +
+                                "classPoints INT," +
+                                "skillPoints INT," +
+                                "skillReallocationPoints INT," +
+                                "attributePoints INT," +
+                                "attributeReallocPoints INT," +
+                                "skillTreePoints TEXT," +
+                                "skillTreeReallocationPoints INT," +
+                                "waypoints TEXT," +
+                                "friends TEXT," +
+                                "timesClaimed TEXT," +
+                                "boundSkills TEXT," +
+                                "attributes TEXT," +
+                                "professions TEXT," +
+                                "classInfo TEXT," +
+                                "quest TEXT" +
+                                ")"
+                );
+                statement.executeUpdate();
+
+
+            }
+
             // Creating table for player profiles
             statement = this.connection.prepareStatement(
                     "CREATE TABLE IF NOT EXISTS profiles (" +
