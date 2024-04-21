@@ -66,7 +66,7 @@ public class InventoryClick implements Listener {
 
         switch (function) {
             case NO_PERMISSIONS:
-                player.sendMessage(plugin.getMessage("not_vip"));
+                player.sendMessage(plugin.getPrefix() + plugin.getMessage("not_vip"));
                 break;
             case PROFILE:
                 if (!meta.getPersistentDataContainer().has(plugin.getProfileKey(), PersistentDataType.STRING)) {
@@ -87,7 +87,8 @@ public class InventoryClick implements Listener {
 //                plugin.getLogger().info("Detected profile: " + profile.getName() + " UUID: " + profile.getProfileId());
                 plugin.getProfileManager().loadProfile(player.getUniqueId(), profileUUID);
 //                plugin.getLogger().info("Loading profile: " + profile.getName());
-                player.sendMessage(plugin.getMessage("loading_profile").replace("%profile_name%", profile.getName()));
+                player.setDisplayName(profile.getName());
+                player.sendMessage(plugin.getPrefix() + plugin.getMessage("loading_profile").replace("%profile_name%", profile.getName()));
                 break;
             case CREATE_PROFILE:
                 player.closeInventory();
