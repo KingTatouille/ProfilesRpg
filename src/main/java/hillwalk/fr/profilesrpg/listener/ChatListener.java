@@ -36,14 +36,14 @@ public class ChatListener implements Listener {
 
             //Vérifiez si le nom du profile est déjà prit.
             if (plugin.getProfileManager().isProfileNameTaken(event.getMessage())) {
-                String invalidNickname = ChatColor.translateAlternateColorCodes('&', plugin.getMessages().get().getString("messages.already_name"));
+                String invalidNickname = plugin.getMessage("already_name");
                 player.sendMessage(invalidNickname);
                 return;
             }
 
             // Vérifiez si le nom du profil est valide (par exemple, ne contient pas de caractères spéciaux non autorisés)
             if (!isValidProfileName(profileName)) {
-                String invalidProfileNameMsg = ChatColor.translateAlternateColorCodes('&', plugin.getMessages().get().getString("messages.invalid_profile_name"));
+                String invalidProfileNameMsg = plugin.getMessage("invalid_profile_name");
                 player.sendMessage(invalidProfileNameMsg);
                 return;
             }
@@ -61,33 +61,40 @@ public class ChatListener implements Listener {
 
             player.setDisplayName(profileName); //On set le pseudo du joueur.
 
-            String profileCreatedMsg = ChatColor.translateAlternateColorCodes('&', plugin.getMessages().get().getString("messages.profile_created"));
+            String profileCreatedMsg = plugin.getMessage("profile_created");
 
             profileCreatedMsg = profileCreatedMsg.replace("%profile_name%", profileName);
 
             player.sendMessage(profileCreatedMsg);
 
             //On téléporte le joueur au spawn des profiles défini plutôt par l'administrateur.
-            player.teleportAsync(new Location(Bukkit.getWorld(plugin.getConfig().getString("profile.spawn.world")),
-                    plugin.getConfig().getDouble("profile.spawn.x"),
-                    plugin.getConfig().getDouble("profile.spawn.y"),
-                    plugin.getConfig().getDouble("profile.spawn.z")
-            ));
+            try {
+                player.teleport(new Location(
+                        Bukkit.getWorld(plugin.getConfig().getString("profile.spawn.world")),
+                        plugin.getConfig().getDouble("profile.spawn.x"),
+                        plugin.getConfig().getDouble("profile.spawn.y"),
+                        plugin.getConfig().getDouble("profile.spawn.z")
+                ));
+            } catch (Exception e) {
+                // Gérer l'erreur en affichant un message de journalisation ou en prenant une autre action
+                plugin.getLogger().warning("Error teleporting the player to the profile location: " + e.getMessage());
+            }
 
             // On ajoute le joueur au lobby des profiles
             plugin.getPlayerLobbyStatusManager().setPlayerInLobby(player, false);
 
             // On met le joueur en survival
-            Bukkit.getScheduler().runTask(plugin, () -> player.setGameMode(GameMode.SURVIVAL));
+            player.setGameMode(GameMode.SURVIVAL);
 
             // On enlève l'effet de la potion.
-            Bukkit.getScheduler().runTask(plugin, () -> player.removePotionEffect(PotionEffectType.BLINDNESS));
+            player.removePotionEffect(PotionEffectType.BLINDNESS);
 
 
             // Désenregistre l'écouteur d'événements de chat
             HandlerList.unregisterAll(this);
         }
     }
+
 
 
     private boolean isValidProfileName(String profileName) {

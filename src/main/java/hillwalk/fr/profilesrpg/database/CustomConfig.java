@@ -1,5 +1,6 @@
 package hillwalk.fr.profilesrpg.database;
 
+import hillwalk.fr.profilesrpg.ProfilesRpg;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -12,9 +13,9 @@ public class CustomConfig {
     private File file;
     private FileConfiguration customFile;
     private String fileName;
-    private JavaPlugin plugin;
+    private ProfilesRpg plugin;
 
-    public CustomConfig(JavaPlugin plugin, String fileName) {
+    public CustomConfig(ProfilesRpg plugin, String fileName) {
         this.plugin = plugin;
         this.fileName = fileName;
     }
@@ -35,6 +36,7 @@ public class CustomConfig {
 
 
     public FileConfiguration get() {
+        customFile = YamlConfiguration.loadConfiguration(file);
         return customFile;
     }
 

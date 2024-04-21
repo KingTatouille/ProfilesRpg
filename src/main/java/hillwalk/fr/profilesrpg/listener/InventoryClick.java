@@ -66,7 +66,7 @@ public class InventoryClick implements Listener {
 
         switch (function) {
             case NO_PERMISSIONS:
-                player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.getMessages().get().getString("messages.not_vip")));
+                player.sendMessage(plugin.getMessage("not_vip"));
                 break;
             case PROFILE:
                 if (!meta.getPersistentDataContainer().has(plugin.getProfileKey(), PersistentDataType.STRING)) {
@@ -82,23 +82,24 @@ public class InventoryClick implements Listener {
                     player.sendMessage("Profile not found.");
                     return;
                 }
+
                 player.closeInventory();
 //                plugin.getLogger().info("Detected profile: " + profile.getName() + " UUID: " + profile.getProfileId());
                 plugin.getProfileManager().loadProfile(player.getUniqueId(), profileUUID);
 //                plugin.getLogger().info("Loading profile: " + profile.getName());
-                player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.getMessages().get().getString("messages.loading_profile").replace("%profile_name%", profile.getName())));
+                player.sendMessage(plugin.getMessage("loading_profile").replace("%profile_name%", profile.getName()));
                 break;
             case CREATE_PROFILE:
                 player.closeInventory();
                 ChatListener chatListener = new ChatListener(plugin, plugin.getProfileManager());
                 Bukkit.getPluginManager().registerEvents(chatListener, plugin);
-                player.sendMessage(plugin.getPrefix() + ChatColor.translateAlternateColorCodes('&', plugin.getMessages().get().getString("messages.enter_name")));
+                player.sendMessage(plugin.getPrefix() + plugin.getMessage("enter_name"));
                 break;
             case DECORATION:
                 // No specific logic for decoration
                 break;
             case DISCONNECT:
-                player.kickPlayer(ChatColor.translateAlternateColorCodes('&', plugin.getMessages().get().getString("messages.disconnect")));
+                player.kickPlayer(plugin.getMessage("disconnect"));
 //                plugin.getLogger().info("Player disconnected.");
                 break;
             default:

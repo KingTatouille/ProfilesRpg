@@ -26,8 +26,8 @@ public class PlayerJoinListener implements Listener {
 
 
         if (player.isOp() && plugin.getLobbySpawn() && plugin.getProfileSpawn()) {
-            player.sendMessage(plugin.getPrefix() + "The lobby location has not been set. Please do so by using /setlobby.");
-            player.sendMessage(plugin.getPrefix() + "The profile spawn location has not been set. Please do so by using /setprofilespawn.");
+            player.sendMessage(plugin.getPrefix() + "The lobby location has not been set. Please do so by using /profile setlobby.");
+            player.sendMessage(plugin.getPrefix() + "The profile spawn location has not been set. Please do so by using /profile setprofilespawn.");
             return;
         }
 
@@ -47,10 +47,7 @@ public class PlayerJoinListener implements Listener {
         player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, Integer.MAX_VALUE, 255, false, false));
 
         //Télportation au lobby.
-        player.teleport(new Location(Bukkit.getWorld(plugin.getConfig().getString("lobby.location.world")),
-                plugin.getConfig().getDouble("lobby.location.x"),
-                plugin.getConfig().getDouble("lobby.location.y"),
-                plugin.getConfig().getDouble("lobby.location.z")));
+        player.teleport(getLobbyLocation(player));
 
         // Open profile selection GUI
         new BukkitRunnable() {
@@ -61,4 +58,36 @@ public class PlayerJoinListener implements Listener {
             }
         }.runTaskLater(plugin, 1);
     }
+
+    public Location getLobbyLocation(Player player) {
+        try {
+            String worldName = plugin.getConfig().getString("lobby.location.world");
+            double x = plugin.getConfig().getDouble("lobby.location.x");
+            double y = plugin.getConfig().getDouble("lobby.location.y");
+            double z = plugin.getConfig().getDouble("lobby.location.z");
+
+            return new Location(Bukkit.getWorld(worldName), x, y, z);
+        } catch (Exception e) {
+
+            // Set player in lobby status
+            plugin.getPlayerLobbyStatusManager().setPlayerInLobby(player, false);
+
+            // Set player to spectate mode to prevent movement and interaction
+            player.setGameMode(GameMode.SURVIVAL);
+
+            player.setHealth(20);
+            player.setFoodLevel(20);
+            player.setLevel(1);
+
+            // On enlève l'effet de la potion.
+            player.removePotionEffect(PotionEffectType.BLINDNESS);
+
+            // Gérer l'erreur en affichant un message de journalisation ou en renvoyant une valeur par défaut
+            plugin.getLogger().warning("Error while retrieving the lobby location from the configuration file: " + e.getMessage());
+
+            return null; // ou renvoyer une valeur par défaut ou une autre action appropriée
+        }
+    }
+
+
 }

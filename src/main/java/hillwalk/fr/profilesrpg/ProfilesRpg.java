@@ -92,8 +92,13 @@ public class ProfilesRpg extends JavaPlugin {
     public CustomConfig getProfileSelection() {
         return profileSelection;
     }
-    public CustomConfig getMessages() {
-        return messages;
+    public String getMessage(String key) {
+        String message = messages.get().getString("messages." + key);
+        if (message != null) {
+            return ChatColor.translateAlternateColorCodes('&', message);
+        } else {
+            return ChatColor.translateAlternateColorCodes('&', messages.get().getString("messages.invalid-command"));
+        }
     }
 
     public PlayerLobbyStatusManager getPlayerLobbyStatusManager() {

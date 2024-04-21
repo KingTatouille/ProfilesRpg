@@ -18,20 +18,15 @@ public class DatabaseManager {
     }
 
     public void connect() {
-        // Create the directory where your database file will be stored if it does not exist
-        File dataFolder = new File(plugin.getDataFolder(), "playerdata.db");
-
-        // Connect to the SQLite database
         try {
-            if (!dataFolder.exists()) {
-                dataFolder.createNewFile();
-            }
+            // Load the SQLite JDBC driver
+            Class.forName("org.sqlite.JDBC");
 
-            if (this.connection != null && !this.connection.isClosed()) {
-                return;
-            }
+            // Create the directory where your database file will be stored if it does not exist
+            File dataFolder = new File(plugin.getDataFolder(), "playerdata.db");
 
-            String url = "jdbc:sqlite:" + dataFolder;
+            // Connect to the SQLite database
+            String url = "jdbc:sqlite:" + dataFolder.getAbsolutePath();
             this.connection = DriverManager.getConnection(url);
 
             plugin.getLogger().info("Connected to the SQLite database.");
@@ -39,7 +34,7 @@ public class DatabaseManager {
             // Now that we're connected, set up the tables
             setupTables();
 
-        } catch (SQLException | IOException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             plugin.getLogger().severe("Could not connect to the SQLite database: " + e.getMessage());
         }
     }

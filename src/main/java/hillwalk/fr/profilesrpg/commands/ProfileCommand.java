@@ -18,7 +18,7 @@ public class ProfileCommand implements CommandExecutor {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player)) {
-            sender.sendMessage(plugin.getPrefix() + plugin.getMessages().get().getString("messages.not-a-player"));
+            sender.sendMessage(plugin.getPrefix() + plugin.getMessage("not-a-player"));
             return true;
         }
 
@@ -39,7 +39,7 @@ public class ProfileCommand implements CommandExecutor {
                 handleReloadConfigs(player);
                 break;
             default:
-                player.sendMessage(plugin.getPrefix() + plugin.getMessages().get().getString("messages.unknown-command"));
+                player.sendMessage(plugin.getPrefix() + plugin.getMessage("unknown-command"));
                 break;
         }
 
@@ -48,7 +48,7 @@ public class ProfileCommand implements CommandExecutor {
 
     private void handleSetLobbyCommand(Player player) {
         if (!player.hasPermission("profiles.setlobby")) {
-            player.sendMessage(plugin.getPrefix() + plugin.getMessages().get().getString("messages.no-permission"));
+            player.sendMessage(plugin.getPrefix() + plugin.getMessage("no-permission"));
             return;
         }
 
@@ -59,12 +59,12 @@ public class ProfileCommand implements CommandExecutor {
         plugin.getConfig().set("lobby.location.z", player.getLocation().getZ());
         plugin.saveConfig();
 
-        player.sendMessage(plugin.getPrefix() + plugin.getMessages().get().getString("messages.lobby-set"));
+        player.sendMessage(plugin.getPrefix() + plugin.getMessage("lobby-set"));
     }
 
     private void handleSetProfileSpawnCommand(Player player) {
         if (!player.hasPermission("profiles.setprofilespawn")) {
-            player.sendMessage(plugin.getPrefix() + plugin.getMessages().get().getString("messages.no-permission"));
+            player.sendMessage(plugin.getPrefix() + plugin.getMessage("no-permission"));
             return;
         }
 
@@ -75,17 +75,17 @@ public class ProfileCommand implements CommandExecutor {
         plugin.getConfig().set("profile.spawn.z", player.getLocation().getZ());
         plugin.saveConfig();
 
-        player.sendMessage(plugin.getPrefix() + plugin.getMessages().get().getString("messages.profile-spawn-set"));
+        player.sendMessage(plugin.getPrefix() + plugin.getMessage("profile-spawn-set"));
     }
 
     private void handleReloadConfigs(Player player) {
         if (!player.hasPermission("profiles.reload")) {
-            player.sendMessage(plugin.getPrefix() + plugin.getMessages().get().getString("messages.no-permission"));
+            player.sendMessage(plugin.getPrefix() + plugin.getMessage("no-permission"));
             return;
         }
 
         plugin.reloadConfig();
-        plugin.getMessages().reload();
+//        plugin.getMessage().reload();
         player.sendMessage(plugin.getPrefix() + "Plugin configuration reloaded successfully.");
 
         }
