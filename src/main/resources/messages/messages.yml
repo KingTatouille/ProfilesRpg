@@ -15,3 +15,4 @@ messages:
   config-reloaded: "&aPlugin configuration reloaded successfully."
   loading_profile: "You loaded the profile: &2&l%profile_name%"
   not_vip: "&cYou don't have VIP permission to access these profile slots."
+  already_name: "&cThis name is already taken."
